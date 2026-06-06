@@ -25,6 +25,8 @@ ARG PI_VERSION=0.78.1
 ARG SSHX_VERSION=0.4.1
 ARG SSHX_S3_VERSION_ID=XkaG41E86MM6KJLn5mogsBf3H54zuvmG
 ARG SSHX_SHA256=faa53abd902f4391acbcba696c55052cd6553534bd4907305d4caca192430ef2
+ARG ZELLIJ_VERSION=0.44.3
+ARG ZELLIJ_SHA256=0f7c346788627f506c0a28296517768633cff24fc822a739f8264b640ecad751
 
 # ───────────────────────────────────────────────────────────────────────────
 # Layer 1 — base OS, locale, certs, fonts, user, language runtimes
@@ -82,6 +84,13 @@ RUN curl -fsSL "https://s3.amazonaws.com/sshx/sshx-x86_64-unknown-linux-musl.tar
     && install -m 0755 /tmp/sshx /usr/local/bin/sshx \
     && rm -f /tmp/sshx.tar.gz /tmp/sshx \
     && sshx --version
+
+RUN curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" -o /tmp/zellij.tar.gz \
+    && echo "${ZELLIJ_SHA256}  /tmp/zellij.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/zellij.tar.gz -C /tmp zellij \
+    && install -m 0755 /tmp/zellij /usr/local/bin/zellij \
+    && rm -f /tmp/zellij.tar.gz /tmp/zellij \
+    && zellij --version
 
 # Coding agent CLIs (pinned) — installed here rather than as a devcontainer Feature.
 RUN npm install -g \
