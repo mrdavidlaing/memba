@@ -1,7 +1,0 @@
-{
-  "id": "agent-clis",
-  "version": "0.1.0",
-  "name": "Memba coding-agent CLIs",
-  "description": "Installs the pinned Claude Code, Codex, OpenCode, and Pi CLIs used by the Memba devcontainer.",
-  "installsAfter": []
-}

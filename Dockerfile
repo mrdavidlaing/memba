@@ -16,7 +16,19 @@ ARG ARGC_VERSION=v1.24.0
 ARG ESBUILD_VERSION=0.27.2
 ARG NODE_VERSION=v22.22.2
 ARG TAILWIND_VERSION=4.2.4
+# Coding agent CLIs (npm)
+ARG CLAUDE_CODE_VERSION=2.1.162
+ARG CODEX_VERSION=0.137.0
+ARG OPENCODE_VERSION=1.15.13
+ARG PI_VERSION=0.78.1
+# sshx — pinned by immutable S3 object version (corresponds to the v0.4.1 release)
+ARG SSHX_VERSION=0.4.1
+ARG SSHX_S3_VERSION_ID=XkaG41E86MM6KJLn5mogsBf3H54zuvmG
+ARG SSHX_SHA256=faa53abd902f4391acbcba696c55052cd6553534bd4907305d4caca192430ef2
 
+# ───────────────────────────────────────────────────────────────────────────
+# Layer 1 — base OS, locale, certs, fonts, user, language runtimes
+# ───────────────────────────────────────────────────────────────────────────
 RUN apt-get update -y && apt-get install -y \
     bash \
     build-essential \
@@ -39,6 +51,15 @@ RUN apt-get update -y && apt-get install -y \
     && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" \
     && chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
+# Node runtime (Elixir/OTP are provided by the base image)
+RUN curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz" \
+    | tar -xJ -C /usr/local --strip-components=1 \
+    && node --version \
+    && npm --version
+
+# ───────────────────────────────────────────────────────────────────────────
+# Layer 2 — generic dev-time tooling (project-agnostic CLIs)
+# ───────────────────────────────────────────────────────────────────────────
 RUN curl -fsSL "https://raw.githubusercontent.com/sigoden/argc/main/install.sh" | sh -s -- --tag "${ARGC_VERSION}" --to /usr/local/bin || \
     echo "⚠️  WARNING: Failed to install argc from GitHub. This tool will not be available."
 
@@ -47,11 +68,31 @@ RUN curl -fsSL "https://github.com/asiermarques/adrgen/releases/download/${ADRGE
     && install -m 0755 /tmp/adrgen /usr/local/bin/adrgen \
     && rm -f /tmp/adrgen
 
-RUN curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz" \
-    | tar -xJ -C /usr/local --strip-components=1 \
-    && node --version \
-    && npm --version
+RUN curl -L https://fly.io/install.sh | sh \
+    && install -m 0755 /root/.fly/bin/flyctl /usr/local/bin/flyctl \
+    && ln -sf /usr/local/bin/flyctl /usr/local/bin/fly || \
+    echo "⚠️  WARNING: Failed to install Fly CLI. This tool will not be available."
 
+# sshx (collaborative terminal) — deconstructed from the upstream
+# `curl https://sshx.io/get | sh` one-liner so the binary is version-pinned to an
+# immutable S3 object version and checksum-verified instead of "always latest".
+RUN curl -fsSL "https://s3.amazonaws.com/sshx/sshx-x86_64-unknown-linux-musl.tar.gz?versionId=${SSHX_S3_VERSION_ID}" -o /tmp/sshx.tar.gz \
+    && echo "${SSHX_SHA256}  /tmp/sshx.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/sshx.tar.gz -C /tmp sshx \
+    && install -m 0755 /tmp/sshx /usr/local/bin/sshx \
+    && rm -f /tmp/sshx.tar.gz /tmp/sshx \
+    && sshx --version
+
+# Coding agent CLIs (pinned) — installed here rather than as a devcontainer Feature.
+RUN npm install -g \
+    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+    "@openai/codex@${CODEX_VERSION}" \
+    "opencode-ai@${OPENCODE_VERSION}" \
+    && npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+# ───────────────────────────────────────────────────────────────────────────
+# Layer 3 — Phoenix asset pipeline (app-specific build tooling)
+# ───────────────────────────────────────────────────────────────────────────
 RUN curl -fsSL "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-x64" \
     -o /usr/local/bin/tailwindcss \
     && chmod 0755 /usr/local/bin/tailwindcss \
@@ -59,11 +100,10 @@ RUN curl -fsSL "https://github.com/tailwindlabs/tailwindcss/releases/download/v$
 
 RUN npm install -g "esbuild@${ESBUILD_VERSION}"
 
-RUN curl -L https://fly.io/install.sh | sh \
-    && install -m 0755 /root/.fly/bin/flyctl /usr/local/bin/flyctl \
-    && ln -sf /usr/local/bin/flyctl /usr/local/bin/fly || \
-    echo "⚠️  WARNING: Failed to install Fly CLI. This tool will not be available."
-
+# ───────────────────────────────────────────────────────────────────────────
+# Image-invariant environment — the single source of truth for these values.
+# Do NOT duplicate these in docker-compose.yml or devcontainer.json.
+# ───────────────────────────────────────────────────────────────────────────
 ENV LANG=C.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=C.UTF-8 \
@@ -72,7 +112,9 @@ ENV LANG=C.UTF-8 \
     HEX_CACERTS_PATH=/etc/ssl/certs/ca-certificates.crt \
     FONTCONFIG_PATH=/etc/fonts \
     FONTCONFIG_FILE=/etc/fonts/fonts.conf \
-    NODE_PATH=/usr/local/lib/node_modules
+    NODE_PATH=/usr/local/lib/node_modules \
+    MIX_ESBUILD_PATH=/usr/local/bin/esbuild \
+    MIX_TAILWIND_PATH=/usr/local/bin/tailwindcss
 
 SHELL ["/bin/bash", "-c"]
 

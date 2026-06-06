@@ -7,26 +7,22 @@ services:
     command: sleep infinity
     depends_on:
       - db
+    # Runtime wiring only. Image-invariant env (locale, certs, fontconfig,
+    # NODE_PATH, MIX_*_PATH, ELIXIR_ERL_OPTIONS) lives in the Dockerfile ENV.
     environment:
-      ANTHROPIC_BASE_URL: https://opencode.ai/zen
-      ANTHROPIC_MODEL: claude-opus-4-8
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-4-5
+      # Agent behaviour — pin to the installed versions; no telemetry.
+      # NOTE: no ANTHROPIC_* here on purpose. Setting ANTHROPIC_BASE_URL/TOKEN
+      # would force Claude Code onto OpenCode Zen and suppress its OAuth login.
+      # Claude Code + Codex authenticate via the user's own accounts; only
+      # OpenCode + Pi use Zen (via OPENCODE_API_KEY / configure-agents.sh).
       DISABLE_AUTOUPDATER: "1"
       DISABLE_TELEMETRY: "1"
-      ELIXIR_ERL_OPTIONS: +fnu
-      FONTCONFIG_FILE: /etc/fonts/fonts.conf
-      FONTCONFIG_PATH: /etc/fonts
-      HEX_CACERTS_PATH: /etc/ssl/certs/ca-certificates.crt
-      LANG: C.UTF-8
-      LC_ALL: C.UTF-8
+      # App / service wiring
       MEMBA_NATIVE_DEVCONTAINER: "1"
-      MIX_ESBUILD_PATH: /usr/local/bin/esbuild
-      MIX_TAILWIND_PATH: /usr/local/bin/tailwindcss
-      NODE_PATH: /usr/local/lib/node_modules
       PGHOST: db
       PGPORT: "5432"
       PGUSER: vscode
-      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+      # Terminal
       TERM: xterm-256color
       COLORTERM: truecolor
     init: true

@@ -4,30 +4,14 @@
   "service": "app",
   "workspaceFolder": "/workspaces/memba",
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/git-lfs:1": {},
-    "./features/agent-clis": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "postStartCommand": "bash .devcontainer/setup-agents.sh",
-  "containerEnv": {
-    "ANTHROPIC_BASE_URL": "https://opencode.ai/zen",
-    "ANTHROPIC_MODEL": "claude-opus-4-8",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5",
-    "DISABLE_AUTOUPDATER": "1",
-    "DISABLE_TELEMETRY": "1",
-    "FONTCONFIG_FILE": "/etc/fonts/fonts.conf",
-    "FONTCONFIG_PATH": "/etc/fonts",
-    "HEX_CACERTS_PATH": "/etc/ssl/certs/ca-certificates.crt",
-    "LANG": "C.UTF-8",
-    "LC_ALL": "C.UTF-8",
-    "MIX_ESBUILD_PATH": "/usr/local/bin/esbuild",
-    "MIX_TAILWIND_PATH": "/usr/local/bin/tailwindcss",
-    "NODE_PATH": "/usr/local/lib/node_modules",
-    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
-    "TERM": "xterm-256color",
-    "COLORTERM": "truecolor"
+  "onCreateCommand": ["bash", ".devcontainer/install-elixir-deps.sh"],
+  "updateContentCommand": {
+    "web-assets": ["bash", ".devcontainer/build-web-assets.sh"],
+    "acceptance": ["bash", ".devcontainer/install-acceptance-deps.sh"]
   },
+  "postStartCommand": ["bash", ".devcontainer/configure-agents.sh"],
   "remoteEnv": {
     "PATH": "${containerWorkspaceFolder}/bin:${containerEnv:PATH}"
   },
@@ -53,8 +37,7 @@
         "bradlc.vscode-tailwindcss"
       ],
       "settings": {
-        "claudeCode.disableLoginPrompt": true,
-        "claudeCode.selectedModel": "claude-opus-4-8",
+        "claudeCode.disableLoginPrompt": false,
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.fontFamily": "'Cascadia Mono', 'Cascadia Code', 'DejaVu Sans Mono', 'Noto Sans Mono', 'Liberation Mono', monospace"
       }
