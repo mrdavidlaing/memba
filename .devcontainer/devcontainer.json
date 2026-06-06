@@ -6,12 +6,12 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "onCreateCommand": ["bash", ".devcontainer/install-elixir-deps.sh"],
+  "onCreateCommand": [".devcontainer/install-elixir-deps.bash"],
   "updateContentCommand": {
-    "web-assets": ["bash", ".devcontainer/build-web-assets.sh"],
-    "acceptance": ["bash", ".devcontainer/install-acceptance-deps.sh"]
+    "web-assets": [".devcontainer/build-web-assets.bash"],
+    "acceptance": [".devcontainer/install-acceptance-deps.bash"]
   },
-  "postStartCommand": ["bash", ".devcontainer/configure-agents.sh"],
+  "postStartCommand": [".devcontainer/configure-agents.bash"],
   "remoteEnv": {
     "PATH": "${containerWorkspaceFolder}/bin:${containerEnv:PATH}"
   },
@@ -32,12 +32,12 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "anthropic.claude-code",
-        "elixir-lsp.elixir-ls",
-        "bradlc.vscode-tailwindcss"
+        "JakeBecker.elixir-ls",
+        "phoenixframework.phoenix",
+        "bradlc.vscode-tailwindcss",
+        "CucumberOpen.cucumber-official"
       ],
       "settings": {
-        "claudeCode.disableLoginPrompt": false,
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.fontFamily": "'Cascadia Mono', 'Cascadia Code', 'DejaVu Sans Mono', 'Noto Sans Mono', 'Liberation Mono', monospace"
       }

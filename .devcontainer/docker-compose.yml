@@ -14,7 +14,7 @@ services:
       # NOTE: no ANTHROPIC_* here on purpose. Setting ANTHROPIC_BASE_URL/TOKEN
       # would force Claude Code onto OpenCode Zen and suppress its OAuth login.
       # Claude Code + Codex authenticate via the user's own accounts; only
-      # OpenCode + Pi use Zen (via OPENCODE_API_KEY / configure-agents.sh).
+      # OpenCode + Pi use Zen (via OPENCODE_API_KEY / configure-agents.bash).
       DISABLE_AUTOUPDATER: "1"
       DISABLE_TELEMETRY: "1"
       # App / service wiring
