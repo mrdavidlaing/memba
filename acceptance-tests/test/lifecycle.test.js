@@ -76,6 +76,17 @@ test("Postgres readiness uses devenv processes instead of removed bin/dev postgr
   assert.equal(command.env.MEMBA_POSTGRES_PORT, "15555");
 });
 
+test("native devcontainer readiness waits for the configured Postgres service", async () => {
+  const config = await buildLifecycleConfig(testEnv({ MEMBA_NATIVE_DEVCONTAINER: "1" }));
+  const command = buildPostgresReadinessCommand(config);
+
+  assert.equal(command.command, "bash");
+  assert.equal(command.args[0], "-lc");
+  assert.match(command.args[1], /pg_isready/);
+  assert.doesNotMatch(command.args[1], /devenv/);
+  assert.equal(command.env.MEMBA_POSTGRES_PORT, "15555");
+});
+
 test("non-dev-shell mix commands run through devenv on the selected Postgres port", async () => {
   const config = await buildLifecycleConfig(testEnv());
   const command = buildMixCommand(config, ["ecto.create", "--quiet"]);
@@ -90,6 +101,18 @@ test("non-dev-shell mix commands run through devenv on the selected Postgres por
     path.resolve(__dirname, "../../bin/mix")
   ]);
   assert.deepEqual(command.args.slice(6), ["ecto.create", "--quiet"]);
+  assert.equal(command.env.MIX_ENV, "test");
+  assert.equal(command.env.PHX_SERVER, "true");
+  assert.equal(command.env.PORT, "4444");
+  assert.equal(command.env.MEMBA_POSTGRES_PORT, "15555");
+});
+
+test("native devcontainer mix commands run directly through bin/mix", async () => {
+  const config = await buildLifecycleConfig(testEnv({ MEMBA_NATIVE_DEVCONTAINER: "1" }));
+  const command = buildMixCommand(config, ["ecto.create", "--quiet"]);
+
+  assert.equal(command.command, path.resolve(__dirname, "../../bin/mix"));
+  assert.deepEqual(command.args, ["ecto.create", "--quiet"]);
   assert.equal(command.env.MIX_ENV, "test");
   assert.equal(command.env.PHX_SERVER, "true");
   assert.equal(command.env.PORT, "4444");

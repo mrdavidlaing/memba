@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: dev
+    command: sleep infinity
+    depends_on:
+      - db
+    environment:
+      ANTHROPIC_BASE_URL: https://opencode.ai/zen
+      ANTHROPIC_MODEL: claude-opus-4-8
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-4-5
+      DISABLE_AUTOUPDATER: "1"
+      DISABLE_TELEMETRY: "1"
+      ELIXIR_ERL_OPTIONS: +fnu
+      FONTCONFIG_FILE: /etc/fonts/fonts.conf
+      FONTCONFIG_PATH: /etc/fonts
+      HEX_CACERTS_PATH: /etc/ssl/certs/ca-certificates.crt
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      MEMBA_NATIVE_DEVCONTAINER: "1"
+      MIX_ESBUILD_PATH: /usr/local/bin/esbuild
+      MIX_TAILWIND_PATH: /usr/local/bin/tailwindcss
+      NODE_PATH: /usr/local/lib/node_modules
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: vscode
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+      TERM: xterm-256color
+      COLORTERM: truecolor
+    init: true
+    volumes:
+      - ..:/workspaces/memba:cached
+
+  db:
+    image: postgres:17.9-bookworm
+    restart: unless-stopped
+    environment:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      POSTGRES_DB: memba_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      POSTGRES_USER: vscode
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -6,29 +6,40 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 default_postgres_port() {
-  printf '%s\n' "${MEMBA_POSTGRES_PORT:-15432}"
+  printf '%s\n' "${MEMBA_POSTGRES_PORT:-${PGPORT:-15432}}"
+}
+
+use_devenv_processes() {
+  [ "${MEMBA_NATIVE_DEVCONTAINER:-}" != "1" ] && command -v devenv >/dev/null 2>&1
 }
 
 if [ "${MEMBA_DEVENV_SHELL:-}" != "1" ]; then
   memba_postgres_port="$(default_postgres_port)"
 
-  exec env \
-    -u DEVENV_DOTFILE \
-    -u DEVENV_PROFILE \
-    -u DEVENV_ROOT \
-    -u DEVENV_STATE \
-    -u DEVENV_TASKS \
-    -u DEVENV_TASK_FILE \
-    -u PGDATA \
-    -u PGHOST \
-    -u PGPORT \
-    MEMBA_DEVENV_SHELL=1 \
-    MEMBA_POSTGRES_PORT="$memba_postgres_port" \
-    devenv shell -O services.postgres.port:int "$memba_postgres_port" -- "$0" "$@"
+  if use_devenv_processes; then
+    exec env \
+      -u DEVENV_DOTFILE \
+      -u DEVENV_PROFILE \
+      -u DEVENV_ROOT \
+      -u DEVENV_STATE \
+      -u DEVENV_TASKS \
+      -u DEVENV_TASK_FILE \
+      -u PGDATA \
+      -u PGHOST \
+      -u PGPORT \
+      MEMBA_DEVENV_SHELL=1 \
+      MEMBA_POSTGRES_PORT="$memba_postgres_port" \
+      devenv shell -O services.postgres.port:int "$memba_postgres_port" -- "$0" "$@"
+  fi
+
+  export MEMBA_DEVENV_SHELL=1
+  export MEMBA_POSTGRES_PORT="$memba_postgres_port"
+  export PGHOST="${PGHOST:-localhost}"
+  export PGPORT="${PGPORT:-$memba_postgres_port}"
 fi
 
 if ! command -v argc >/dev/null 2>&1; then
-  echo "Missing required tool: argc. devenv shell did not provide the expected environment." >&2
+  echo "Missing required tool: argc. The development environment did not provide the expected tools." >&2
   exit 1
 fi
 
@@ -44,12 +55,33 @@ devenv_with_postgres_port() {
   )
 }
 
+wait_for_native_postgres() {
+  local host="${PGHOST:-localhost}"
+  local port="${PGPORT:-${MEMBA_POSTGRES_PORT:-5432}}"
+
+  for _ in $(seq 1 120); do
+    if pg_isready -h "$host" -p "$port" >/dev/null 2>&1; then
+      return
+    fi
+    sleep 1
+  done
+
+  echo "Postgres did not become ready at PGHOST=$host PGPORT=$port." >&2
+  echo "Start the devcontainer Docker Compose services and retry." >&2
+  exit 1
+}
+
 start_postgres() {
-  if ! devenv_with_postgres_port processes status postgres >/dev/null 2>&1; then
-    DEVENV_TUI=false devenv_with_postgres_port processes up --no-strict-ports -d postgres
+  if use_devenv_processes; then
+    if ! devenv_with_postgres_port processes status postgres >/dev/null 2>&1; then
+      DEVENV_TUI=false devenv_with_postgres_port processes up --no-strict-ports -d postgres
+    fi
+
+    devenv_with_postgres_port processes wait --timeout 120
+    return
   fi
 
-  devenv_with_postgres_port processes wait --timeout 120
+  wait_for_native_postgres
 }
 
 migrate_databases() {
@@ -73,7 +105,9 @@ up() {
 
 # @cmd Stop development services
 down() {
-  devenv_with_postgres_port processes down || true
+  if use_devenv_processes; then
+    devenv_with_postgres_port processes down || true
+  fi
 }
 
 precommit() {

@@ -9,12 +9,36 @@ devenv_from_repo_root() {
   (cd "$repo_root" && devenv "$@")
 }
 
+use_devenv_processes() {
+  [ "${MEMBA_NATIVE_DEVCONTAINER:-}" != "1" ] && command -v devenv >/dev/null 2>&1
+}
+
+wait_for_native_postgres() {
+  local host="${PGHOST:-localhost}"
+  local port="${PGPORT:-${MEMBA_POSTGRES_PORT:-5432}}"
+
+  for _ in $(seq 1 120); do
+    if pg_isready -h "$host" -p "$port" >/dev/null 2>&1; then
+      return
+    fi
+    sleep 1
+  done
+
+  echo "Postgres did not become ready at PGHOST=$host PGPORT=$port" >&2
+  exit 1
+}
+
 ensure_postgres() {
   if [ -z "${PGHOST:-}" ] || [ -z "${PGPORT:-}" ]; then
     return
   fi
 
   if pg_isready -h "$PGHOST" -p "$PGPORT" >/dev/null 2>&1; then
+    return
+  fi
+
+  if ! use_devenv_processes; then
+    wait_for_native_postgres
     return
   fi
 
@@ -34,7 +58,7 @@ ensure_postgres() {
 }
 
 cleanup_started_postgres() {
-  if [ "$started_postgres" = 1 ]; then
+  if [ "$started_postgres" = 1 ] && use_devenv_processes; then
     devenv_from_repo_root processes down >/dev/null 2>&1 || true
   fi
 }

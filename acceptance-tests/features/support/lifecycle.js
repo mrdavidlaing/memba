@@ -67,6 +67,18 @@ function buildDevCommand(config, subcommand) {
 }
 
 function buildPostgresReadinessCommand(config) {
+  if (config.usesNativeServices) {
+    return {
+      command: "bash",
+      args: [
+        "-lc",
+        'host="${PGHOST:-localhost}"; port="${PGPORT:-$MEMBA_POSTGRES_PORT}"; for i in $(seq 1 120); do pg_isready -h "$host" -p "$port" >/dev/null 2>&1 && exit 0; sleep 1; done; echo "Postgres did not become ready at PGHOST=$host PGPORT=$port" >&2; exit 1'
+      ],
+      cwd: config.repoRoot,
+      env: buildCommandEnvironment(config)
+    };
+  }
+
   return {
     command: "bash",
     args: [
@@ -81,7 +93,7 @@ function buildPostgresReadinessCommand(config) {
 function buildMixCommand(config, mixArgs) {
   const env = buildCommandEnvironment(config);
 
-  if (config.inDevShell) {
+  if (config.inDevShell || config.usesNativeServices) {
     return {
       command: config.binMixPath,
       args: mixArgs,
@@ -146,6 +158,7 @@ async function buildLifecycleConfig(env = process.env, portFinder = findFreePort
     phoenixPort,
     postgresPort,
     inDevShell: env.MEMBA_DEVENV_SHELL === "1",
+    usesNativeServices: env.MEMBA_NATIVE_DEVCONTAINER === "1" || env.MEMBA_USE_DEVENV === "0",
     skipAppStart: parseBoolean(env.ACCEPTANCE_SKIP_APP_START),
     tearDownPostgres:
       !parseBoolean(env.ACCEPTANCE_KEEP_POSTGRES) &&
