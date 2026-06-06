@@ -44,6 +44,7 @@ cat > "$HOME/.pi/agent/models.json" <<EOF
     "zen": {
       "name": "OpenCode Zen",
       "baseUrl": "${ZEN_BASE}/v1",
+      "apiKey": "$OPENCODE_API_KEY",
       "api": "openai-completions",
       "models": [
         { "id": "qwen3.7-plus" },

@@ -35,7 +35,8 @@
         "JakeBecker.elixir-ls",
         "phoenixframework.phoenix",
         "bradlc.vscode-tailwindcss",
-        "CucumberOpen.cucumber-official"
+        "CucumberOpen.cucumber-official",
+        "ms-vsliveshare.vsliveshare"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
