@@ -11,7 +11,10 @@
     "web-assets": [".devcontainer/build-web-assets.bash"],
     "acceptance": [".devcontainer/install-acceptance-deps.bash"]
   },
-  "postStartCommand": [".devcontainer/configure-agents.bash"],
+  "postStartCommand": {
+    "agents-config": [".devcontainer/configure-agents.bash"],
+    "agents-upgrade": [".devcontainer/upgrade-agents.bash"]
+  },
   "remoteEnv": {
     "PATH": "${containerWorkspaceFolder}/bin:${containerEnv:PATH}"
   },

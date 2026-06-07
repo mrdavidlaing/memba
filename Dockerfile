@@ -16,11 +16,7 @@ ARG ARGC_VERSION=v1.24.0
 ARG ESBUILD_VERSION=0.27.2
 ARG NODE_VERSION=v22.22.2
 ARG TAILWIND_VERSION=4.2.4
-# Coding agent CLIs (npm)
-ARG CLAUDE_CODE_VERSION=2.1.162
-ARG CODEX_VERSION=0.137.0
-ARG OPENCODE_VERSION=1.15.13
-ARG PI_VERSION=0.78.1
+
 # sshx — pinned by immutable S3 object version (corresponds to the v0.4.1 release)
 ARG SSHX_VERSION=0.4.1
 ARG SSHX_S3_VERSION_ID=XkaG41E86MM6KJLn5mogsBf3H54zuvmG
@@ -92,12 +88,13 @@ RUN curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ
     && rm -f /tmp/zellij.tar.gz /tmp/zellij \
     && zellij --version
 
-# Coding agent CLIs (pinned) — installed here rather than as a devcontainer Feature.
+# Coding agent CLIs — installed here rather than as a devcontainer Feature.
+# Installed without version pinning because these tools evolve quickly.
 RUN npm install -g \
-    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
-    "@openai/codex@${CODEX_VERSION}" \
-    "opencode-ai@${OPENCODE_VERSION}" \
-    && npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
+    "@anthropic-ai/claude-code@latest" \
+    "@openai/codex@latest" \
+    "opencode-ai@latest" \
+    "@earendil-works/pi-coding-agent@latest"
 
 # ───────────────────────────────────────────────────────────────────────────
 # Layer 3 — Phoenix asset pipeline (app-specific build tooling)
