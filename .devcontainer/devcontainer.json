@@ -40,7 +40,7 @@
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
-        "terminal.integrated.fontFamily": "'Cascadia Mono', 'Cascadia Code', 'DejaVu Sans Mono', 'Noto Sans Mono', 'Liberation Mono', monospace"
+        "terminal.integrated.gpuAcceleration": "off"
       }
     }
   },
