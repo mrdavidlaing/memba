@@ -40,7 +40,10 @@
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
-        "terminal.integrated.gpuAcceleration": "off"
+        "terminal.integrated.gpuAcceleration": "off",
+        "window.autoDetectColorScheme": true,
+        "workbench.preferredDarkColorTheme": "Solarized Dark",
+        "workbench.preferredLightColorTheme": "Solarized Light"
       }
     }
   },
